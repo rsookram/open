@@ -7,6 +7,7 @@ import android.net.Uri;
 import android.os.Bundle;
 import android.os.Environment;
 import android.provider.Settings;
+import android.view.KeyEvent;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -85,7 +86,59 @@ public class MainActivity extends Activity {
         );
 
         ListView listView = findViewById(R.id.list);
-        listView.setAdapter(new FileAdapter(this, files));
+        FileAdapter adapter = new FileAdapter(this, files);
+        listView.setAdapter(adapter);
+
+        // Open selected item when enter is pressed (for hardware keyboards)
+        listView.setOnKeyListener((v, keyCode, event) -> {
+            if (keyCode != KeyEvent.KEYCODE_ENTER || event.getAction() != KeyEvent.ACTION_UP) {
+                return false;
+            }
+
+            File selectedItem = (File) listView.getSelectedItem();
+            if (selectedItem == null) {
+                return false;
+            }
+
+            openFile(v.getContext(), selectedItem);
+
+            return true;
+        });
+    }
+
+    private static void openFile(Context context, File file) {
+        if (file.isDirectory()) {
+            context.startActivity(MainActivity.newIntent(context, file.getPath()));
+        } else {
+            Uri uri = FileProvider.getUriForFile(
+                    context,
+                    context.getPackageName() + ".provider",
+                    file
+            );
+            String mimeType = getMimeType(file.getName());
+            int flags = Intent.FLAG_GRANT_READ_URI_PERMISSION;
+
+            if (!mimeType.startsWith("video/")) {
+                flags |= Intent.FLAG_ACTIVITY_NEW_TASK;
+            }
+
+            context.startActivity(
+                    new Intent(Intent.ACTION_VIEW)
+                            .setDataAndType(uri, mimeType)
+                            .addFlags(flags)
+            );
+        }
+    }
+
+    private static String getMimeType(String name) {
+        String[] strings = name.split("\\.");
+        if (strings.length == 1) {
+            return "application/octet-stream";
+        }
+
+        String extension = strings[strings.length - 1];
+        String mimeType = MimeTypeMap.getSingleton().getMimeTypeFromExtension(extension);
+        return mimeType != null ? mimeType : "application/octet-stream";
     }
 
     private static class FileAdapter extends ArrayAdapter<File> {
@@ -109,42 +162,9 @@ public class MainActivity extends Activity {
             String name = file.getName();
             view.setText(name);
 
-            view.setOnClickListener(v -> {
-                if (file.isDirectory()) {
-                    context.startActivity(MainActivity.newIntent(context, file.getPath()));
-                } else {
-                    Uri uri = FileProvider.getUriForFile(
-                            context,
-                            context.getPackageName() + ".provider",
-                            file
-                    );
-                    String mimeType = getMimeType(name);
-                    int flags = Intent.FLAG_GRANT_READ_URI_PERMISSION;
-
-                    if (!mimeType.startsWith("video/")) {
-                        flags |= Intent.FLAG_ACTIVITY_NEW_TASK;
-                    }
-
-                    context.startActivity(
-                            new Intent(Intent.ACTION_VIEW)
-                                    .setDataAndType(uri, mimeType)
-                                    .addFlags(flags)
-                    );
-                }
-            });
+            view.setOnClickListener(v -> openFile(context, file));
 
             return view;
-        }
-
-        private String getMimeType(String name) {
-            String[] strings = name.split("\\.");
-            if (strings.length == 1) {
-                return "application/octet-stream";
-            }
-
-            String extension = strings[strings.length - 1];
-            String mimeType = MimeTypeMap.getSingleton().getMimeTypeFromExtension(extension);
-            return mimeType != null ? mimeType : "application/octet-stream";
         }
     }
 }
