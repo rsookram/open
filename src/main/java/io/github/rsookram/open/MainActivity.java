@@ -3,6 +3,8 @@ package io.github.rsookram.open;
 import android.app.Activity;
 import android.content.Context;
 import android.content.Intent;
+import android.content.pm.ShortcutInfo;
+import android.content.pm.ShortcutManager;
 import android.net.Uri;
 import android.os.Bundle;
 import android.os.Environment;
@@ -33,7 +35,10 @@ public class MainActivity extends Activity {
 
     static Intent newIntent(Context context, String path) {
         return new Intent(context, MainActivity.class)
-                .putExtra(EXTRA_PATH, path);
+                .putExtra(EXTRA_PATH, path)
+                // ShortcutInfo requires an action to be set:
+                // https://cs.android.com/android/platform/superproject/+/master:frameworks/base/core/java/android/content/pm/ShortcutInfo.java;l=1369;drc=7da659bb6cfb38697828c27ab1b47aa0f51c7a2d
+                .setAction(Intent.ACTION_MAIN);
     }
 
     @Override
@@ -107,8 +112,12 @@ public class MainActivity extends Activity {
     }
 
     private static void openFile(Context context, File file) {
+        context.startActivity(openFileIntent(context, file));
+    }
+
+    private static Intent openFileIntent(Context context, File file) {
         if (file.isDirectory()) {
-            context.startActivity(MainActivity.newIntent(context, file.getPath()));
+            return MainActivity.newIntent(context, file.getPath());
         } else {
             Uri uri = FileProvider.getUriForFile(
                     context,
@@ -122,11 +131,9 @@ public class MainActivity extends Activity {
                 flags |= Intent.FLAG_ACTIVITY_NEW_TASK;
             }
 
-            context.startActivity(
-                    new Intent(Intent.ACTION_VIEW)
-                            .setDataAndType(uri, mimeType)
-                            .addFlags(flags)
-            );
+            return new Intent(Intent.ACTION_VIEW)
+                    .setDataAndType(uri, mimeType)
+                    .addFlags(flags);
         }
     }
 
@@ -163,6 +170,20 @@ public class MainActivity extends Activity {
             view.setText(name);
 
             view.setOnClickListener(v -> openFile(context, file));
+            view.setOnLongClickListener(v -> {
+                ShortcutManager shortcutManager = context.getSystemService(ShortcutManager.class);
+                if (shortcutManager.isRequestPinShortcutSupported()) {
+                    ShortcutInfo shortcutInfo = new ShortcutInfo.Builder(context, file.getPath())
+                            .setIntent(openFileIntent(context, file))
+                            .setShortLabel(file.getName())
+                            .build();
+
+                    shortcutManager.requestPinShortcut(shortcutInfo, null);
+                    return true;
+                }
+
+                return false;
+            });
 
             return view;
         }
