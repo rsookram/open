@@ -23,11 +23,12 @@ import androidx.core.content.FileProvider;
 import java.io.File;
 import java.util.Arrays;
 import java.util.Comparator;
+import java.util.stream.Stream;
 
 public class MainActivity extends Activity {
 
     // These need to be relative to the root of external storage
-    private static final String[] DEFAULT_DIRECTORIES = {
+    private static final String[] DEFAULT_PATHS = {
     };
 
     private static final String EXTRA_PATH = "path";
@@ -75,8 +76,8 @@ public class MainActivity extends Activity {
             files = new File(path).listFiles((d, name) -> !name.startsWith("."));
         } else {
             File externalStorageDirectory = Environment.getExternalStorageDirectory();
-            files = Arrays.stream(DEFAULT_DIRECTORIES)
-                    .map(dir -> new File(externalStorageDirectory, dir))
+            files = Arrays.stream(DEFAULT_PATHS)
+                    .flatMap(p -> getFiles(externalStorageDirectory, p))
                     .filter(File::exists)
                     .toArray(File[]::new);
         }
@@ -109,6 +110,16 @@ public class MainActivity extends Activity {
 
             return true;
         });
+    }
+
+    private static Stream<File> getFiles(File externalStorageDirectory, String path) {
+        if (!path.endsWith("/*")) {
+            return Stream.of(new File(externalStorageDirectory, path));
+        }
+
+        File dir = new File(externalStorageDirectory, path.substring(0, path.length() - "/*".length()));
+        File[] files = dir.listFiles((d, name) -> !name.startsWith("."));
+        return files != null ? Arrays.stream(files) : Stream.empty();
     }
 
     private static void openFile(Context context, File file) {
