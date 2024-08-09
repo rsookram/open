@@ -5,6 +5,7 @@ import android.content.Context;
 import android.content.Intent;
 import android.content.pm.ShortcutInfo;
 import android.content.pm.ShortcutManager;
+import android.graphics.Insets;
 import android.net.Uri;
 import android.os.Bundle;
 import android.os.Environment;
@@ -13,6 +14,7 @@ import android.view.KeyEvent;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
+import android.view.WindowInsets;
 import android.webkit.MimeTypeMap;
 import android.widget.ArrayAdapter;
 import android.widget.ListView;
@@ -47,6 +49,8 @@ public class MainActivity extends Activity {
         super.onCreate(savedInstanceState);
 
         setContentView(R.layout.main_activity);
+
+        applySystemUiVisibility(findViewById(R.id.list));
 
         if (Environment.isExternalStorageManager()) {
             setup();
@@ -157,6 +161,19 @@ public class MainActivity extends Activity {
         String extension = strings[strings.length - 1];
         String mimeType = MimeTypeMap.getSingleton().getMimeTypeFromExtension(extension);
         return mimeType != null ? mimeType : "application/octet-stream";
+    }
+
+    private void applySystemUiVisibility(View content) {
+        getWindow().setDecorFitsSystemWindows(false);
+
+        content.setOnApplyWindowInsetsListener((v, insets) -> {
+            Insets systemInsets = insets.getInsets(WindowInsets.Type.systemBars());
+            v.setPadding(
+                    systemInsets.left, systemInsets.top, systemInsets.right, systemInsets.bottom
+            );
+
+            return insets;
+        });
     }
 
     private static class FileAdapter extends ArrayAdapter<File> {
