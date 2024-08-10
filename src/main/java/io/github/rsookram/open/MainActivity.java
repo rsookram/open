@@ -3,8 +3,6 @@ package io.github.rsookram.open;
 import android.app.Activity;
 import android.content.Context;
 import android.content.Intent;
-import android.content.pm.ShortcutInfo;
-import android.content.pm.ShortcutManager;
 import android.graphics.Insets;
 import android.net.Uri;
 import android.os.Bundle;
@@ -127,12 +125,8 @@ public class MainActivity extends Activity {
     }
 
     private static void openFile(Context context, File file) {
-        context.startActivity(openFileIntent(context, file));
-    }
-
-    private static Intent openFileIntent(Context context, File file) {
         if (file.isDirectory()) {
-            return MainActivity.newIntent(context, file.getPath());
+            context.startActivity(MainActivity.newIntent(context, file.getPath()));
         } else {
             Uri uri = FileProvider.getUriForFile(
                     context,
@@ -146,9 +140,11 @@ public class MainActivity extends Activity {
                 flags |= Intent.FLAG_ACTIVITY_NEW_TASK;
             }
 
-            return new Intent(Intent.ACTION_VIEW)
-                    .setDataAndType(uri, mimeType)
-                    .addFlags(flags);
+            context.startActivity(
+                    new Intent(Intent.ACTION_VIEW)
+                            .setDataAndType(uri, mimeType)
+                            .addFlags(flags)
+            );
         }
     }
 
@@ -198,20 +194,6 @@ public class MainActivity extends Activity {
             view.setText(name);
 
             view.setOnClickListener(v -> openFile(context, file));
-            view.setOnLongClickListener(v -> {
-                ShortcutManager shortcutManager = context.getSystemService(ShortcutManager.class);
-                if (shortcutManager.isRequestPinShortcutSupported()) {
-                    ShortcutInfo shortcutInfo = new ShortcutInfo.Builder(context, file.getPath())
-                            .setIntent(openFileIntent(context, file))
-                            .setShortLabel(file.getName())
-                            .build();
-
-                    shortcutManager.requestPinShortcut(shortcutInfo, null);
-                    return true;
-                }
-
-                return false;
-            });
 
             return view;
         }
