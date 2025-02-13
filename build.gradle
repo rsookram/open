@@ -1,5 +1,5 @@
 plugins {
-    id 'com.android.application' version '8.4.2' apply true
+    id 'com.android.application' version '8.8.0' apply true
 }
 
 repositories {
@@ -10,12 +10,12 @@ repositories {
 android {
     namespace 'io.github.rsookram.open'
 
-    compileSdk 34
+    compileSdk 35
 
     defaultConfig {
         applicationId "io.github.rsookram.open"
         minSdk 30
-        targetSdk 34
+        targetSdk 35
         versionCode 1
         versionName "1.0"
     }
