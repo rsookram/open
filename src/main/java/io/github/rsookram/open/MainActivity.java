@@ -34,12 +34,9 @@ public class MainActivity extends Activity {
     private static final String EXTRA_PATH = "path";
     private static final int REQUEST_PERMISSION = 1;
 
-    static Intent newIntent(Context context, String path) {
+    private static Intent newIntent(Context context, String path) {
         return new Intent(context, MainActivity.class)
-                .putExtra(EXTRA_PATH, path)
-                // ShortcutInfo requires an action to be set:
-                // https://cs.android.com/android/platform/superproject/+/master:frameworks/base/core/java/android/content/pm/ShortcutInfo.java;l=1369;drc=7da659bb6cfb38697828c27ab1b47aa0f51c7a2d
-                .setAction(Intent.ACTION_MAIN);
+                .putExtra(EXTRA_PATH, path);
     }
 
     @Override
