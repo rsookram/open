@@ -146,12 +146,12 @@ public class MainActivity extends Activity {
     }
 
     private static String getMimeType(String name) {
-        String[] strings = name.split("\\.");
-        if (strings.length == 1) {
+        int dotIndex = name.lastIndexOf(".");
+        if (dotIndex < 0) {
             return "application/octet-stream";
         }
 
-        String extension = strings[strings.length - 1];
+        String extension = name.substring(dotIndex + 1);
         String mimeType = MimeTypeMap.getSingleton().getMimeTypeFromExtension(extension);
         return mimeType != null ? mimeType : "application/octet-stream";
     }
