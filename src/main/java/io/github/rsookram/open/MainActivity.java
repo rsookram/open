@@ -130,17 +130,11 @@ public class MainActivity extends Activity {
                     context.getPackageName() + ".provider",
                     file
             );
-            String mimeType = getMimeType(file.getName());
-            int flags = Intent.FLAG_GRANT_READ_URI_PERMISSION;
-
-            if (!mimeType.startsWith("video/")) {
-                flags |= Intent.FLAG_ACTIVITY_NEW_TASK;
-            }
 
             context.startActivity(
                     new Intent(Intent.ACTION_VIEW)
-                            .setDataAndType(uri, mimeType)
-                            .addFlags(flags)
+                            .setDataAndType(uri, getMimeType(file.getName()))
+                            .addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION)
             );
         }
     }
